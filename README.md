@@ -18,5 +18,3 @@ Xây dựng ứng dụng hỗ trợ chẩn đoán và điều trị y khoa sử 
 - notebooks/: notebook phân tích
 - src/: source code
 - outputs/: kết quả
-- reports/: báo cáo
-- slides/: slide thuyết trình
