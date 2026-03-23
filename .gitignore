@@ -28,10 +28,6 @@ Thumbs.db
 *.joblib
 *.pkl
 
-# Output
-outputs/figures/
-outputs/metrics/
-outputs/rules/
 
 # Logs
 *.log
