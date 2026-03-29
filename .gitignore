@@ -20,6 +20,9 @@ env/
 .DS_Store
 Thumbs.db
 
+# Data
+data/raw/
+data/processed/
 
 # Model files
 *.pth
@@ -28,6 +31,11 @@ Thumbs.db
 *.ckpt
 *.joblib
 *.pkl
+
+# Output
+outputs/figures/
+outputs/metrics/
+outputs/rules/
 
 # Logs
 *.log
