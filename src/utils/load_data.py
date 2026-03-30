@@ -1,26 +1,26 @@
+from pathlib import Path
 import pandas as pd
-import os
+
 
 def load_heart_data(file_path):
     """
-    Hàm đọc dữ liệu bệnh tim (Heart Disease) từ file CSV.
+    Đọc dữ liệu bệnh tim từ file CSV.
+    Trả về DataFrame nếu thành công, raise lỗi nếu thất bại.
     """
-    if not os.path.exists(file_path):
-        print(f"Lỗi: Không tìm thấy file tại {file_path}. Vui lòng kiểm tra lại đường dẫn!")
-        return None
+    file_path = Path(file_path)
+
+    if not file_path.exists():
+        raise FileNotFoundError(f"Không tìm thấy file dữ liệu: {file_path}")
 
     try:
         df = pd.read_csv(file_path)
-        print(f"✅ Đọc dữ liệu thành công!")
-        print(f"📊 Kích thước: {df.shape[0]} dòng (bệnh nhân) x {df.shape[1]} cột (thuộc tính).")
         return df
     except Exception as e:
-        print(f"❌ Có lỗi xảy ra khi đọc file: {e}")
-        return None
+        raise ValueError(f"Lỗi khi đọc file CSV: {e}") from e
 
 
-# Test thử khi chạy trực tiếp file này trên PyCharm
 if __name__ == "__main__":
-    # Đường dẫn tương đối từ thư mục src/utils/ ra data/raw/
-    file_path = "../../data/raw/heart.csv"
+    file_path = Path(__file__).resolve().parents[2] / "data" / "raw" / "heart.csv"
     df = load_heart_data(file_path)
+    print("Đọc dữ liệu thành công!")
+    print(f"Kích thước: {df.shape[0]} dòng x {df.shape[1]} cột")
