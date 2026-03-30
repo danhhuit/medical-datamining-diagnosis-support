@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 
-
 def load_heart_data(file_path):
     """
     Hàm đọc dữ liệu bệnh tim (Heart Disease) từ file CSV.
