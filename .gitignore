@@ -26,8 +26,6 @@ Thumbs.db
 *.h5
 *.ckpt
 *.joblib
-*.pkl
-
 
 # Logs
 *.log
