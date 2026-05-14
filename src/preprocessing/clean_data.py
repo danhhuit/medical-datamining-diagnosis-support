@@ -26,11 +26,6 @@ def basic_data_check(df: pd.DataFrame) -> dict:
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Làm sạch dữ liệu cơ bản.
-    Với file heart.csv hiện tại:
-    - không có missing values
-    - không có duplicate rows
-    - toàn bộ cột đã ở dạng số
-    => bước clean chủ yếu là kiểm tra, bỏ trùng nếu phát sinh.
     """
     df = df.copy()
     df = df.drop_duplicates().reset_index(drop=True)
