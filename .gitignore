@@ -20,12 +20,21 @@ env/
 .DS_Store
 Thumbs.db
 
-# Model files
+# Model files (nặng, không push lên GitHub)
 *.pth
 *.pt
 *.h5
 *.ckpt
 *.joblib
+outputs/models/*.pkl
+outputs/preprocessors/*.pkl
 
 # Logs
 *.log
+
+# Data files lớn (tùy chọn - bỏ comment nếu data quá lớn)
+# data/raw/*.csv
+# data/processed/*.csv
+
+# Gemini AI config
+.gemini/

@@ -1,10 +1,26 @@
-seaborn
+# Core Data Science
 pandas
 numpy
+
+# Machine Learning
 scikit-learn
+
+# Visualization
 matplotlib
-jupyter
+seaborn
+plotly
+
+# Association Rules Mining
 mlxtend
+
+# Web App Demo
 streamlit
+
+# Model Persistence
 joblib
+
+# Excel Support
 openpyxl
+
+# Jupyter Notebooks
+jupyter
