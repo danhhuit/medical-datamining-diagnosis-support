@@ -38,3 +38,6 @@ outputs/preprocessors/*.pkl
 
 # Gemini AI config
 .gemini/
+
+# Streamlit secrets (chứa API Key bảo mật cục bộ)
+.streamlit/

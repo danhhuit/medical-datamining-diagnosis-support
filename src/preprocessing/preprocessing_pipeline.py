@@ -8,11 +8,13 @@ from src.preprocessing.transform_data import (
     rename_target_column,
     scale_continuous_features,
     save_preprocessor_artifact,
+    bin_and_encode_for_association,
 )
 from src.preprocessing.feature_engineering import validate_final_dataset
 from src.preprocessing.config import (
     RAW_DATA_FILE,
     PROCESSED_DATA_FILE,
+    ASSOCIATION_DATA_FILE,
     ensure_directories,
 )
 
@@ -42,14 +44,21 @@ def run_preprocessing_pipeline() -> None:
     print("[6] Kiểm tra bộ dữ liệu sau xử lý...")
     validate_final_dataset(df_processed, target_column="diagnosis")
 
-    print(f"[7] Lưu dữ liệu đã xử lý vào: {PROCESSED_DATA_FILE}")
+    print(f"[7] Lưu dữ liệu đã xử lý cho Phân lớp vào: {PROCESSED_DATA_FILE}")
     df_processed.to_csv(PROCESSED_DATA_FILE, index=False)
 
     print("[8] Lưu preprocessor artifact...")
     preprocessor_path = save_preprocessor_artifact(scaler)
 
+    print("[9] Chuẩn bị dữ liệu cho Luật kết hợp (Rời rạc hóa & Mã hóa)...")
+    # Sử dụng df_renamed (dữ liệu sạch chưa scale) để rời rạc hóa
+    df_association = bin_and_encode_for_association(df_renamed)
+    print(f"[10] Lưu dữ liệu cho Luật kết hợp vào: {ASSOCIATION_DATA_FILE}")
+    df_association.to_csv(ASSOCIATION_DATA_FILE, index=False)
+
     print("=== TIỀN XỬ LÝ XONG ===")
-    print(f"Dữ liệu processed: {PROCESSED_DATA_FILE}")
+    print(f"Dữ liệu processed (Phân lớp & Hồi quy): {PROCESSED_DATA_FILE}")
+    print(f"Dữ liệu association (Luật kết hợp): {ASSOCIATION_DATA_FILE}")
     print(f"Preprocessor artifact: {preprocessor_path}")
 
 if __name__ == "__main__":

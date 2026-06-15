@@ -9,7 +9,6 @@ import matplotlib
 matplotlib.use('Agg')  # Sử dụng backend không cần GUI
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
