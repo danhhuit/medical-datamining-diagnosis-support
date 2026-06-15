@@ -71,10 +71,11 @@ def run_clustering_pipeline(n_clusters: int = 3) -> None:
     print(f"--> Đã lưu biểu đồ PCA phân cụm vào: {pca_plot_path}")
     
     # 4. Phân tích cụm dựa trên dữ liệu gốc (cho dễ diễn giải y học)
-    raw_data_file = RAW_DATA_DIR / "heart.csv"
-    if raw_data_file.exists():
-        df_raw = pd.read_csv(raw_data_file)
-        # Loại bỏ trùng lặp giống clean_data để khớp kích thước
+    # Đọc bộ dữ liệu gốc
+    from src.preprocessing.config import RAW_DATA_FILE
+    from src.preprocessing.clean_data import load_raw_data
+    try:
+        df_raw = load_raw_data(RAW_DATA_FILE)
         df_raw = df_raw.drop_duplicates().reset_index(drop=True)
         df_raw["Cluster"] = cluster_labels
         
@@ -91,8 +92,8 @@ def run_clustering_pipeline(n_clusters: int = 3) -> None:
         summary_path = METRICS_DIR / "clustering_summary.csv"
         cluster_summary.to_csv(summary_path)
         print(f"--> Đã xuất bảng phân tích cụm vào: {summary_path}")
-    else:
-        print("Cảnh báo: Không tìm thấy file dữ liệu gốc để phân tích đặc trưng cụm.")
+    except Exception as e:
+        print(f"Cảnh báo: Không thể phân tích đặc trưng cụm từ dữ liệu gốc: {e}")
         cluster_summary = None
         
     # 5. Lưu trữ artifacts (Model và PCA)

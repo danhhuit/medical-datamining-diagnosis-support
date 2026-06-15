@@ -22,12 +22,10 @@ from src.utils.config import (
 def run_regression_pipeline() -> None:
     print("=== BẮT ĐẦU HUẤN LUYỆN MÔ HÌNH HỒI QUY (REGRESSION) ===")
     
-    # 1. Đọc dữ liệu gốc để giữ nguyên đơn vị y khoa
-    raw_data_file = RAW_DATA_DIR / "heart.csv"
-    if not raw_data_file.exists():
-        raise FileNotFoundError(f"Không tìm thấy file dữ liệu gốc tại: {raw_data_file}")
-        
-    df = pd.read_csv(raw_data_file)
+    # 1. Đọc bộ dữ liệu gốc để giữ nguyên đơn vị y khoa
+    from src.preprocessing.config import RAW_DATA_FILE
+    from src.preprocessing.clean_data import load_raw_data
+    df = load_raw_data(RAW_DATA_FILE)
     df = df.drop_duplicates().reset_index(drop=True)
     
     # Đặt bài toán: Dự đoán nhịp tim tối đa (thalach) từ các thuộc tính khác

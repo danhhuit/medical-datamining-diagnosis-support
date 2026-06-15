@@ -22,8 +22,8 @@ HELP = {
     "exang": "Đau thắt ngực khi gắng sức gợi ý mạch vành bị hẹp.",
     "oldpeak": "Mức chênh xuống đoạn ST khi gắng sức (mm). Cao = thiếu máu cơ tim.",
     "slope": "Hình dạng đoạn ST. 0: dốc lên (bình thường). 1: phẳng. 2: dốc xuống (nghi ngờ).",
-    "ca": "Số mạch vành lớn phát hiện qua chụp huỳnh quang (0–3).",
-    "thal": "0: bình thường. 1: khuyết tật cố định (nhồi máu cũ). 2: khuyết tật hồi phục (mạch vành hoạt động).",
+    "ca": "Số mạch vành lớn phát hiện qua chụp huỳnh quang (0–4).",
+    "thal": "0: bình thường. 1: khuyết tật cố định (nhồi máu cũ). 2: khuyết tật hồi phục (mạch vành hoạt động). 3: không xác định (unknown).",
 }
 
 
@@ -86,11 +86,11 @@ def input_form(lang: str = "vi") -> Tuple[bool, Dict[str, Any]]:
             slope = st.selectbox(t("f_slope", lang), slope_list, key="form_slope",
                                  format_func=lambda x: t(f"slope_{x}", lang), help=HELP["slope"])
             
-            ca_list = [0, 1, 2, 3]
+            ca_list = [0, 1, 2, 3, 4]
             ca = st.selectbox(t("f_ca", lang), ca_list, key="form_ca", help=HELP["ca"])
 
         st.markdown(f"**{t('form_extra', lang)}**")
-        thal_list = [0, 1, 2]
+        thal_list = [0, 1, 2, 3]
         thal = st.selectbox(t("f_thal", lang), thal_list, key="form_thal",
                             format_func=lambda x: t(f"thal_{x}", lang), help=HELP["thal"])
 
@@ -101,3 +101,46 @@ def input_form(lang: str = "vi") -> Tuple[bool, Dict[str, Any]]:
             "fbs": fbs, "restecg": restecg, "thalach": thalach, "exang": exang,
             "oldpeak": oldpeak, "slope": slope, "ca": ca, "thal": thal}
     return submitted, data
+
+
+def validate_inputs(data: Dict[str, Any], lang: str = "vi") -> str | None:
+    """
+    Kiểm tra xem các giá trị nhập vào có hợp lệ và nằm trong phạm vi của widget không.
+    Trả về chuỗi thông báo lỗi nếu không hợp lệ, ngược lại trả về None.
+    """
+    # 1. Tuổi
+    if not (1 <= data.get("age", 0) <= 120):
+        return (
+            "Tuổi phải nằm trong khoảng từ 1 đến 120."
+            if lang == "vi"
+            else "Age must be between 1 and 120."
+        )
+    # 2. Huyết áp lúc nghỉ
+    if not (80 <= data.get("trestbps", 0) <= 250):
+        return (
+            "Huyết áp lúc nghỉ phải nằm trong khoảng từ 80 đến 250 mm Hg."
+            if lang == "vi"
+            else "Resting blood pressure must be between 80 and 250 mm Hg."
+        )
+    # 3. Cholesterol
+    if not (100 <= data.get("chol", 0) <= 600):
+        return (
+            "Cholesterol phải nằm trong khoảng từ 100 đến 600 mg/dl."
+            if lang == "vi"
+            else "Serum cholesterol must be between 100 and 600 mg/dl."
+        )
+    # 4. Nhịp tim tối đa
+    if not (60 <= data.get("thalach", 0) <= 250):
+        return (
+            "Nhịp tim tối đa phải nằm trong khoảng từ 60 đến 250 bpm."
+            if lang == "vi"
+            else "Maximum heart rate must be between 60 and 250 bpm."
+        )
+    # 5. Độ chênh ST
+    if not (0.0 <= data.get("oldpeak", 0.0) <= 7.0):
+        return (
+            "Độ chênh ST (oldpeak) phải nằm trong khoảng từ 0.0 đến 7.0 mm."
+            if lang == "vi"
+            else "ST depression (oldpeak) must be between 0.0 and 7.0 mm."
+        )
+    return None

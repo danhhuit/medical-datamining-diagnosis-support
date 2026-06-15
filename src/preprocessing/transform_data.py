@@ -71,8 +71,8 @@ def bin_and_encode_for_association(df: pd.DataFrame) -> pd.DataFrame:
     df["restecg"] = df["restecg"].map({0: "restecg_normal", 1: "restecg_st_t_wave", 2: "restecg_hypertrophy"}).astype(str)
     df["exang"] = df["exang"].map({0: "exang_no", 1: "exang_yes"}).astype(str)
     df["slope"] = df["slope"].map({0: "slope_upsloping", 1: "slope_flat", 2: "slope_downsloping"}).astype(str)
-    df["ca"] = df["ca"].map({0: "ca_0", 1: "ca_1", 2: "ca_2", 3: "ca_3"}).astype(str)
-    df["thal"] = df["thal"].map({0: "thal_normal", 1: "thal_fixed_defect", 2: "thal_reversible_defect"}).astype(str)
+    df["ca"] = df["ca"].map({0: "ca_0", 1: "ca_1", 2: "ca_2", 3: "ca_3", 4: "ca_4"}).astype(str)
+    df["thal"] = df["thal"].map({0: "thal_normal", 1: "thal_fixed_defect", 2: "thal_reversible_defect", 3: "thal_unknown"}).astype(str)
     
     # Cột target
     df[TARGET_COLUMN_PROCESSED] = df[TARGET_COLUMN_PROCESSED].map({0: "no_heart_disease", 1: "heart_disease"}).astype(str)

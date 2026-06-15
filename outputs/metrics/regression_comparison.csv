@@ -1,4 +1,4 @@
 model_name,features,MSE,R2_score
-Simple Linear Regression,age,412.7578442995211,0.03556932425045278
-Multivariate Linear Regression,"age, trestbps, chol, oldpeak",328.0849900970341,0.2334119555267451
-Polynomial Regression (Deg 2),"age, age^2",417.5005854030363,0.024487657189392276
+Simple Linear Regression,age,368.06487488721336,0.19211071912735045
+Multivariate Linear Regression,"age, trestbps, chol, oldpeak",329.63792727055204,0.2764564994348806
+Polynomial Regression (Deg 2),"age, age^2",365.387784024535,0.19798683814724527

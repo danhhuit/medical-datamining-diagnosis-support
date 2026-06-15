@@ -141,18 +141,19 @@ def run_training_pipeline() -> None:
     print(f"--> Mô hình tốt nhất: {best_model_name}")
     print(f"--> Thông tin best model: {best_info}")
 
-    print("[6] Lưu model...")
-    saved_model_path = save_best_model(
-        model=best_model,
-        feature_names=X.columns,
-        best_model_name=best_model_name
-    )
+    print("[6] Lưu tất cả model đã train...")
+    for model_name, model in trained_models.items():
+        save_best_model(
+            model=model,
+            feature_names=X.columns,
+            best_model_name=model_name
+        )
+    print(f"    Đã lưu {len(trained_models)} model vào {MODEL_DIR}")
 
     print("[7] Lưu metrics...")
     save_metrics(results_df, best_info)
 
     print("=== TRAIN XONG ===")
-    print(f"Model đã lưu tại: {saved_model_path}")
     print(f"Bảng so sánh model lưu tại: {METRICS_DIR / 'model_comparison.csv'}")
 
 

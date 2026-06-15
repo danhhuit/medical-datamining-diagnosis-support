@@ -15,16 +15,22 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import streamlit as st
 import pandas as pd
+import os
 
-from src.app.translations import t
-from src.app.ui_components import input_form
-from src.app.display_result import show_result
-
-# Đảm bảo Streamlit nạp lại mã nguồn predict.py mới nhất khi chạy
+# Đảm bảo Streamlit nạp lại mã nguồn mới nhất khi chạy
 import importlib
 import src.models.predict
+import src.app.display_result
+import src.app.ui_components
+
 importlib.reload(src.models.predict)
+importlib.reload(src.app.display_result)
+importlib.reload(src.app.ui_components)
+
 from src.models.predict import predict_one
+from src.app.display_result import show_result
+from src.app.ui_components import input_form, validate_inputs
+from src.app.translations import t
 
 from src.models.save_model import list_saved_models
 
@@ -66,13 +72,49 @@ def get_lang() -> str:
     return st.session_state.get("lang", "vi")
 
 
+def get_best_model_file() -> str | None:
+    best_info_path = PROJECT_ROOT / "outputs" / "metrics" / "best_model_info.json"
+    if best_info_path.exists():
+        try:
+            with open(best_info_path, "r", encoding="utf-8") as f:
+                info = json.load(f)
+            best_model_name = info.get("model_name")
+            if best_model_name:
+                return f"{best_model_name}_best_model.pkl"
+        except Exception:
+            pass
+    return None
+
+
 def get_model() -> str | None:
+    # 1. Thử lấy mô hình được người dùng chọn thủ công trong session state
+    if "selected_model" in st.session_state and st.session_state["selected_model"]:
+        models = list_saved_models()
+        if st.session_state["selected_model"] in models:
+            return st.session_state["selected_model"]
+
+    # 2. Thử lấy mô hình tốt nhất mặc định từ file json
+    best_file = get_best_model_file()
+    if best_file:
+        models = list_saved_models()
+        if best_file in models:
+            return best_file
+
+    # 3. Fallback nếu không có cấu hình
     models = list_saved_models()
     if not models:
         return None
-    for m in models:
-        if "logistic_regression" in m:
-            return m
+    
+    # Chỉ chọn các mô hình phân lớp (kết thúc bằng _best_model.pkl)
+    clf_models = [m for m in models if m.endswith("_best_model.pkl")]
+    if clf_models:
+        # Ưu tiên theo thứ tự độ tin cậy/hiệu năng
+        for pref in ["knn", "random_forest", "logistic_regression", "naive_bayes", "decision_tree"]:
+            for m in clf_models:
+                if m.startswith(pref):
+                    return m
+        return clf_models[0]
+        
     return models[0]
 
 
@@ -89,6 +131,20 @@ def page_diagnosis():
 
     st.caption(f"{t('diag_model_using', lang)}: {model_file}")
 
+    # ── Xử lý reset form TRƯỚC khi render widget (tránh lỗi Streamlit) ──
+    if st.session_state.get("_reset_form"):
+        defaults = {
+            "age": 50, "sex": 1, "cp": 0, "trestbps": 130, "chol": 240,
+            "fbs": 0, "restecg": 0, "thalach": 150, "exang": 0,
+            "oldpeak": 1.0, "slope": 0, "ca": 0, "thal": 0
+        }
+        for k, v in defaults.items():
+            st.session_state[f"form_{k}"] = v
+        st.session_state["selected_sample_case"] = "Mặc định (Default)"
+        st.session_state["prev_sample_case"] = "Mặc định (Default)"
+        st.session_state["current_result"] = None
+        del st.session_state["_reset_form"]
+
     col1, col2 = st.columns([1, 1], gap="large")
     with col1:
         st.markdown(f"#### {t('diag_patient_title', lang)}")
@@ -98,17 +154,17 @@ def page_diagnosis():
         st.markdown("##### " + ("Tải hồ sơ bệnh nhân mẫu:" if lang == "vi" else "Load Sample Patient Profile:"))
         sample_options = {
             "Mặc định (Default)": None,
-            "Ca 1: Không mắc bệnh tim (Healthy - Xác suất ~2.4%)": {
-                "age": 34, "sex": 1, "cp": 0, "trestbps": 118, "chol": 182, "fbs": 0,
-                "restecg": 2, "thalach": 174, "exang": 0, "oldpeak": 0.0, "slope": 0, "ca": 0, "thal": 0
+            "Ca 1: Không mắc bệnh tim (Healthy - Xác suất RF ~0.5%)": {
+                "age": 44, "sex": 1, "cp": 1, "trestbps": 120, "chol": 220, "fbs": 0,
+                "restecg": 0, "thalach": 170, "exang": 0, "oldpeak": 0.0, "slope": 0, "ca": 0, "thal": 0
             },
-            "Ca 2: Ranh giới / Nghi ngờ (Borderline - Xác suất ~49.4%)": {
-                "age": 38, "sex": 1, "cp": 0, "trestbps": 120, "chol": 231, "fbs": 0,
-                "restecg": 0, "thalach": 182, "exang": 1, "oldpeak": 3.8, "slope": 1, "ca": 0, "thal": 2
+            "Ca 2: Ranh giới / Nghi ngờ (Borderline - Xác suất RF ~50.0%)": {
+                "age": 58, "sex": 1, "cp": 2, "trestbps": 112, "chol": 230, "fbs": 0,
+                "restecg": 2, "thalach": 165, "exang": 0, "oldpeak": 2.5, "slope": 1, "ca": 1, "thal": 2
             },
-            "Ca 3: Mắc bệnh tim / Nguy cơ cao (Diseased - Xác suất ~97.5%)": {
-                "age": 70, "sex": 1, "cp": 2, "trestbps": 160, "chol": 269, "fbs": 0,
-                "restecg": 0, "thalach": 112, "exang": 1, "oldpeak": 2.9, "slope": 1, "ca": 1, "thal": 2
+            "Ca 3: Mắc bệnh tim / Nguy cơ cao (Diseased - Xác suất RF ~99.0%)": {
+                "age": 60, "sex": 1, "cp": 3, "trestbps": 125, "chol": 258, "fbs": 0,
+                "restecg": 2, "thalach": 141, "exang": 1, "oldpeak": 2.8, "slope": 1, "ca": 1, "thal": 2
             }
         }
         
@@ -124,6 +180,15 @@ def page_diagnosis():
             if selected_sample:
                 for k, v in selected_sample.items():
                     st.session_state[f"form_{k}"] = v
+                # Chạy dự đoán ngay cho ca mẫu mới chọn để hiển thị kết quả lập tức
+                try:
+                    result = predict_one(selected_sample, model_file)
+                    st.session_state["current_result"] = {
+                        "result": result,
+                        "inputs": selected_sample
+                    }
+                except Exception as e:
+                    st.session_state["current_result"] = None
             else:
                 defaults = {
                     "age": 50, "sex": 1, "cp": 0, "trestbps": 130, "chol": 240,
@@ -132,31 +197,47 @@ def page_diagnosis():
                 }
                 for k, v in defaults.items():
                     st.session_state[f"form_{k}"] = v
+                st.session_state["current_result"] = None
             st.session_state["prev_sample_case"] = selected_sample_name
+            
+        # Tự động xóa kết quả chẩn đoán cũ nếu người dùng đã thay đổi thông số trên form nhưng chưa bấm nút chẩn đoán
+        if st.session_state.get("current_result") is not None:
+            prev_inputs = st.session_state["current_result"]["inputs"]
+            for k, v in prev_inputs.items():
+                current_val = st.session_state.get(f"form_{k}")
+                if current_val is not None and current_val != v:
+                    st.session_state["current_result"] = None
+                    break
             
         submitted, user_data = input_form(lang)
         
         if submitted:
-            with st.spinner(t("diag_analyzing", lang)):
-                try:
-                    result = predict_one(user_data, model_file)
-                    st.session_state["current_result"] = {
-                        "result": result,
-                        "inputs": user_data
-                    }
-                    
-                    # Lưu vào lịch sử (History)
-                    from datetime import datetime
-                    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    history_entry = {
-                        "timestamp": now_str,
-                        "inputs": user_data.copy(),
-                        "result": result
-                    }
-                    st.session_state["history"].insert(0, history_entry)
-                except Exception as e:
-                    st.error(f"{t('diag_error', lang)}: {e}")
+            # Kiểm tra dữ liệu đầu vào trước khi dự đoán
+            error_msg = validate_inputs(user_data, lang)
+            if error_msg:
+                st.error(error_msg)
+                st.session_state["current_result"] = None
+            else:
+                with st.spinner(t("diag_analyzing", lang)):
+                    try:
+                        result = predict_one(user_data, model_file)
+                        st.session_state["current_result"] = {
+                            "result": result,
+                            "inputs": user_data
+                        }
+                        
+                        # Lưu vào lịch sử (History)
+                        from datetime import datetime
+                        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        history_entry = {
+                            "timestamp": now_str,
+                            "inputs": user_data.copy(),
+                            "result": result
+                        }
+                        st.session_state["history"].insert(0, history_entry)
+                    except Exception as e:
+                        st.error(f"{t('diag_error', lang)}: {e}")
 
     with col2:
         st.markdown(f"#### {t('diag_result_title', lang)}")
@@ -173,19 +254,8 @@ def page_diagnosis():
                 use_container_width=True,
                 type="secondary"
             ):
-                st.session_state["current_result"] = None
-                # Reset all form fields in session state
-                defaults = {
-                    "age": 50, "sex": 1, "cp": 0, "trestbps": 130, "chol": 240,
-                    "fbs": 0, "restecg": 0, "thalach": 150, "exang": 0,
-                    "oldpeak": 1.0, "slope": 0, "ca": 0, "thal": 0
-                }
-                for k, v in defaults.items():
-                    st.session_state[f"form_{k}"] = v
-                # Reset selectbox select state
-                if "selected_sample_case" in st.session_state:
-                    st.session_state["selected_sample_case"] = "Mặc định (Default)"
-                st.session_state["prev_sample_case"] = "Mặc định (Default)"
+                # Đặt cờ reset – sẽ được xử lý ở đầu hàm trước khi render widget
+                st.session_state["_reset_form"] = True
                 st.rerun()
         else:
             st.info(t("diag_placeholder", lang))
@@ -271,6 +341,20 @@ def page_history():
     for entry in history:
         inputs = entry["inputs"]
         result = entry["result"]
+        
+        # Lấy thông tin gợi ý y khoa từ Gemini
+        advice_text = entry.get("gemini_advice", "")
+        if not advice_text:
+            try:
+                import hashlib
+                inputs_str = json.dumps(inputs, sort_keys=True) if inputs else ""
+                pred = result.get("prediction", 0)
+                cache_key = hashlib.md5(f"{inputs_str}_{pred}_{lang}".encode("utf-8")).hexdigest()
+                if "gemini_advice_cache" in st.session_state and cache_key in st.session_state["gemini_advice_cache"]:
+                    advice_text = st.session_state["gemini_advice_cache"][cache_key]
+            except Exception:
+                pass
+                
         row = {
             "timestamp": entry["timestamp"],
             "age": inputs["age"],
@@ -289,7 +373,8 @@ def page_history():
             "prediction": result["prediction"],
             "probability_class_0": result["probabilities"][0] if "probabilities" in result and result["probabilities"] else 1.0 - result["positive_class_probability"],
             "probability_class_1": result["positive_class_probability"],
-            "model_name": result["model_name"]
+            "model_name": result["model_name"],
+            "gemini_advice": advice_text
         }
         export_rows.append(row)
 
@@ -396,13 +481,44 @@ def page_history():
                 ]
                 st.dataframe(pd.DataFrame(summary_data), use_container_width=True, hide_index=True)
                 
-                # Nút tải lại kết quả của ca này
-                download_df = pd.DataFrame([{
+                # Lấy thông tin gợi ý y khoa từ Gemini
+                advice_text = entry.get("gemini_advice", "")
+                if not advice_text:
+                    try:
+                        import hashlib
+                        inputs_str = json.dumps(inputs, sort_keys=True) if inputs else ""
+                        cache_key = hashlib.md5(f"{inputs_str}_{prediction}_{lang}".encode("utf-8")).hexdigest()
+                        if "gemini_advice_cache" in st.session_state and cache_key in st.session_state["gemini_advice_cache"]:
+                            advice_text = st.session_state["gemini_advice_cache"][cache_key]
+                            entry["gemini_advice"] = advice_text # lưu lại vào history entry
+                    except Exception:
+                        pass
+
+                # Nút tải lại kết quả của ca này (đầy đủ thông tin)
+                download_row = {
+                    "timestamp": timestamp,
+                    "age": inputs.get("age"),
+                    "sex": inputs.get("sex"),
+                    "cp": inputs.get("cp"),
+                    "trestbps": inputs.get("trestbps"),
+                    "chol": inputs.get("chol"),
+                    "fbs": inputs.get("fbs"),
+                    "restecg": inputs.get("restecg"),
+                    "thalach": inputs.get("thalach"),
+                    "exang": inputs.get("exang"),
+                    "oldpeak": inputs.get("oldpeak"),
+                    "slope": inputs.get("slope"),
+                    "ca": inputs.get("ca"),
+                    "thal": inputs.get("thal"),
+                    t("result_header", lang): label,
                     t("result_model", lang): model_name,
                     t("result_risk", lang): risk,
                     t("result_prob", lang): f"{prob * 100:.1f}%",
-                    t("result_header", lang): label,
-                }])
+                    "probability_class_0": result["probabilities"][0] if "probabilities" in result and result["probabilities"] else 1.0 - prob,
+                    "probability_class_1": prob,
+                    "gemini_advice": advice_text
+                }
+                download_df = pd.DataFrame([download_row])
                 csv_bytes = download_df.to_csv(index=False).encode("utf-8-sig")
                 st.download_button(
                     label=(t("diag_download_csv", lang) + f" (Ca #{len(history) - idx})"),
@@ -410,6 +526,18 @@ def page_history():
                     file_name=f"diagnosis_case_{len(history) - idx}.csv",
                     mime="text/csv",
                     key=f"dl_btn_{idx}"
+                )
+
+            # Hiển thị gợi ý y khoa từ Gemini AI nếu có
+            st.markdown("---")
+            st.markdown("**Gợi ý y khoa từ Gemini AI:**" if lang == "vi" else "**Gemini AI Medical Advice:**")
+            if advice_text:
+                st.markdown(advice_text)
+            else:
+                st.caption(
+                    "Không có lời khuyên Gemini AI nào được tạo cho ca này tại màn hình chẩn đoán."
+                    if lang == "vi" else
+                    "No Gemini AI advice was generated for this case in the diagnosis screen."
                 )
 
 
@@ -762,9 +890,47 @@ def page_compare():
         csv = df.to_csv(index=False).encode("utf-8-sig")
         st.download_button(t("compare_download_csv", lang), csv, "model_comparison.csv", "text/csv")
 
-        # Biểu đồ bằng matplotlib thuần
+        # Biểu đồ nhóm bằng Plotly (tương tác)
         cols = [c for c in ["accuracy", "precision", "recall", "f1_score"] if c in df.columns]
         if cols:
+            import plotly.graph_objects as go
+            
+            fig_plotly = go.Figure()
+            colors_plotly = ["#1a3a5c", "#2d6a9f", "#e67e22", "#c0392b"]
+            
+            for i, col in enumerate(cols):
+                fig_plotly.add_trace(go.Bar(
+                    x=df["model_name"].str.replace("_", " ").str.title(),
+                    y=df[col],
+                    name=col.replace("_", " ").title(),
+                    marker_color=colors_plotly[i % len(colors_plotly)],
+                    text=[f"{val:.3f}" for val in df[col]],
+                    textposition='outside',
+                    hovertemplate=f"<b>%{{x}}</b><br>{col.replace('_', ' ').title()}: %{{y:.4f}}<extra></extra>"
+                ))
+                
+            fig_plotly.update_layout(
+                title={
+                    'text': f"<b>{t('compare_chart_title', lang)}</b>",
+                    'y': 0.95,
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'yanchor': 'top',
+                    'font': {'size': 16}
+                },
+                barmode='group',
+                yaxis=dict(title='Score', range=[0, 1.25]),
+                xaxis=dict(title='Model'),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
+                height=450,
+                margin=dict(l=20, r=20, t=60, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+            )
+            fig_plotly.update_yaxes(gridcolor='rgba(128,128,128,0.2)', gridwidth=1)
+            st.plotly_chart(fig_plotly, use_container_width=True)
+
+            # Vẽ thầm lặng matplotlib cho nút tải xuống
             import matplotlib.pyplot as plt
             import numpy as np
             import io
@@ -791,8 +957,7 @@ def page_compare():
             ax.set_ylim([0, 1.15])
             ax.legend(loc='lower right', ncol=len(cols))
             ax.grid(True, linestyle="--", alpha=0.3)
-            
-            st.pyplot(fig)
+            plt.close(fig)
 
             # Nút tải biểu đồ
             buf = io.BytesIO()
@@ -938,24 +1103,24 @@ def page_clustering():
     
     if lang == "vi":
         st.markdown(
-            "- **Cụm 0 (Nguy cơ Thấp - Bệnh nhân trẻ):** Gồm các bệnh nhân có độ tuổi trung bình trẻ nhất (~47 tuổi), "
-            "nhịp tim gắng sức tối đa đạt mức cao nhất (~162 bpm), chỉ số tổn thương tim ST rất thấp (~0.51). "
-            "Tỷ lệ mắc bệnh tim thực tế trong cụm này rất thấp, chỉ **22.9%**.\n"
-            "- **Cụm 1 (Nguy cơ Cao - Bệnh lý nặng):** Gồm bệnh nhân lớn tuổi (~58 tuổi), chỉ số huyết áp và cholesterol cao, "
-            "nhịp tim tối đa thấp (~130 bpm), mức độ tổn thương ST cơ tim rất cao (~1.89) và số mạch máu bị tắc nghẽn lớn. "
-            "Tỷ lệ mắc bệnh thực tế lên tới **90.2%**.\n"
-            "- **Cụm 2 (Quá tải mạch - Ít tổn thương cơ tim):** Gồm bệnh nhân lớn tuổi (~58 tuổi) có chỉ số huyết áp (~141 mmHg) "
-            "và cholesterol (~262 mg/dl) cao nhất hệ thống, nhưng nhịp tim gắng sức vẫn khá tốt (~155 bpm) và chỉ số tổn thương ST thấp. "
-            "Tỷ lệ mắc bệnh thực tế thấp, chỉ **22.3%**."
+            "- **Cụm 0 (Bệnh nhân trẻ tuổi):** Gồm các bệnh nhân có độ tuổi trung bình trẻ nhất (~48 tuổi), "
+            "nhịp tim gắng sức tối đa đạt mức cao nhất (~165 bpm), chỉ số tổn thương tim ST rất thấp (~0.47). "
+            "Tỷ lệ mắc bệnh tim thực tế trong cụm này là **47.4%**.\n"
+            "- **Cụm 1 (Nhóm đau thắt ngực điển hình):** Gồm các bệnh nhân trung niên (~57 tuổi), có loại đau ngực trung bình thấp nhất, "
+            "nhịp tim tối đa trung bình (~141 bpm) và mức độ tổn thương ST cơ tim trung bình (~1.37). "
+            "Tỷ lệ mắc bệnh thực tế là **31.8%**.\n"
+            "- **Cụm 2 (Bệnh nhân lớn tuổi - Nguy cơ cao):** Gồm các bệnh nhân lớn tuổi nhất (~60 tuổi) có chỉ số huyết áp (~137 mmHg) "
+            "và cholesterol (~259 mg/dl) cao nhất hệ thống, nhịp tim gắng sức tối đa thấp nhất (~138 bpm), chỉ số tổn thương ST cao nhất (~1.47) và tắc nghẽn mạch lớn nhất. "
+            "Tỷ lệ mắc bệnh thực tế lên tới **70.3%**."
         )
     else:
         st.markdown(
-            "- **Cluster 0 (Low Risk - Younger Patients):** Features the youngest average age (~47), highest max heart rate (~162 bpm), "
-            "and very low ST depression (~0.51). Actual heart disease rate is only **22.9%**.\n"
-            "- **Cluster 1 (High Risk - Severe Patients):** Older patients (~58) with high blood pressure and cholesterol, "
-            "low max heart rate (~130 bpm), high ST depression (~1.89), and blocked major vessels. Actual disease rate is **90.2%**.\n"
-            "- **Cluster 2 (Cardiovascular Strain - Low Heart Lesion):** Older patients (~58) with the highest blood pressure (~141 mmHg) "
-            "and cholesterol (~262 mg/dl), but maintaining high max heart rate (~155 bpm) and low ST depression. Actual disease rate is **22.3%**."
+            "- **Cluster 0 (Younger Patients):** Features the youngest average age (~48), highest max heart rate (~165 bpm), "
+            "and very low ST depression (~0.47). Actual heart disease rate is **47.4%**.\n"
+            "- **Cluster 1 (Typical Angina Group):** Middle-aged patients (~57) with low chest pain types, "
+            "average max heart rate (~141 bpm), and average ST depression (~1.37). Actual disease rate is **31.8%**.\n"
+            "- **Cluster 2 (Older Patients - High Risk):** Older patients (~60) with the highest blood pressure (~137 mmHg) "
+            "and cholesterol (~259 mg/dl), lowest max heart rate (~138 bpm), highest ST depression (~1.47), and most blocked vessels. Actual disease rate is **70.3%**."
         )
 
 
@@ -1094,8 +1259,8 @@ def page_guide():
         ["exang", "binary", "0, 1", "Đau ngực khi gắng sức" if lang == "vi" else "Exercise angina"],
         ["oldpeak", "float", "0–6.2", "Độ chênh ST (mm)" if lang == "vi" else "ST depression"],
         ["slope", "cat", "0–2", "Độ dốc đoạn ST" if lang == "vi" else "ST slope"],
-        ["ca", "int", "0–3", "Số mạch máu nhuộm màu" if lang == "vi" else "Major vessels colored"],
-        ["thal", "cat", "0–2", "Thalassemia" if lang == "vi" else "Thalassemia"],
+        ["ca", "int", "0–4", "Số mạch máu nhuộm màu" if lang == "vi" else "Major vessels colored"],
+        ["thal", "cat", "0–3", "Thalassemia" if lang == "vi" else "Thalassemia"],
     ]
     st.dataframe(pd.DataFrame(rows, columns=[
         t("attr_col_name", lang), t("attr_col_type", lang),
@@ -1161,9 +1326,47 @@ def main():
     menu = st.sidebar.radio(t("nav_label", lang), nav_labels)
 
     st.sidebar.markdown("---")
+    st.sidebar.markdown("**Cấu hình Mô hình**" if lang == "vi" else "**Model Config**")
+    
+    # Lấy danh sách các mô hình phân lớp có sẵn
+    all_models = list_saved_models()
+    clf_models = sorted([m for m in all_models if m.endswith("_best_model.pkl")])
+    
+    if clf_models:
+        # Xác định mô hình mặc định
+        default_model = get_model()
+        if default_model not in clf_models:
+            default_model = clf_models[0]
+            
+        default_idx = clf_models.index(default_model)
+        
+        # Hàm hiển thị tên mô hình thân thiện
+        def format_model_name(fname: str) -> str:
+            name = fname.replace("_best_model.pkl", "")
+            best_model_file = get_best_model_file()
+            label = name.replace("_", " ").title()
+            if fname == best_model_file:
+                label += " (Best ★)"
+            return label
+
+        selected_model = st.sidebar.selectbox(
+            "Chọn mô hình chẩn đoán:" if lang == "vi" else "Select diagnosis model:",
+            clf_models,
+            index=default_idx,
+            format_func=format_model_name,
+            key="selected_model_selectbox"
+        )
+        
+        # Cập nhật vào session_state
+        if st.session_state.get("selected_model") != selected_model:
+            st.session_state["selected_model"] = selected_model
+            # Xóa kết quả chẩn đoán hiện tại để bắt đầu chẩn đoán mới
+            st.session_state["current_result"] = None
+            st.rerun()
+
+    st.sidebar.markdown("---")
     st.sidebar.markdown("**Gemini AI Config**" if lang == "vi" else "**Gemini AI Config**")
     
-    import os
     default_key = os.environ.get("GEMINI_API_KEY", "")
     
     gemini_key = st.sidebar.text_input(

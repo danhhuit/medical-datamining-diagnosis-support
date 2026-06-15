@@ -37,11 +37,14 @@ def run_training():
 
 
 def run_evaluation():
-    """Chạy đánh giá mô hình trên tập test."""
+    """Chạy đánh giá tất cả mô hình trên tập test."""
     from src.evaluation.evaluate_model import evaluate_model
+    from src.evaluation.plot_results import plot_roc_curve, plot_model_comparison
     from src.models.predict import load_model_artifact
     from src.models.train_model import load_processed_data, split_data
-    from src.utils.config import PROCESSED_DATA_FILE, TARGET_COLUMN
+    from src.utils.config import PROCESSED_DATA_FILE, TARGET_COLUMN, METRICS_DIR
+    import json
+    import pandas as pd
 
     print("=== ĐÁNH GIÁ MÔ HÌNH ===")
 
@@ -49,31 +52,46 @@ def run_evaluation():
     X, y = load_processed_data(PROCESSED_DATA_FILE, TARGET_COLUMN)
     _, X_test, _, y_test = split_data(X, y)
 
-    # Load model tốt nhất
+    # Load model tốt nhất từ best_model_info.json
+    best_info_path = METRICS_DIR / "best_model_info.json"
+    best_model_name = None
+    if best_info_path.exists():
+        with open(best_info_path, "r", encoding="utf-8") as f:
+            best_info = json.load(f)
+            best_model_name = best_info.get("model_name")
+
+    # Load tất cả model đã lưu
     from src.models.save_model import list_saved_models
     models = list_saved_models()
     if not models:
         print("Chưa có model nào. Hãy chạy --train trước.")
         return
 
-    model_file = models[0]
-    for m in models:
-        if "logistic_regression" in m:
-            model_file = m
-            break
+    # Đánh giá từng model
+    classification_models = [m for m in models if m.endswith("_best_model.pkl")]
+    for model_file in classification_models:
+        try:
+            artifact = load_model_artifact(model_file)
+            model = artifact["model"]
+            model_name = artifact["model_name"]
 
-    artifact = load_model_artifact(model_file)
-    model = artifact["model"]
-    model_name = artifact["model_name"]
+            y_pred = model.predict(X_test)
+            is_best = " ★ BEST" if model_name == best_model_name else ""
+            print(f"\n--- Đánh giá: {model_name}{is_best} ---")
+            evaluate_model(y_test, y_pred, model_name=model_name)
 
-    y_pred = model.predict(X_test)
-    evaluate_model(y_test, y_pred, model_name=model_name)
+            # Vẽ ROC curve nếu model hỗ trợ predict_proba
+            if hasattr(model, "predict_proba"):
+                y_prob = model.predict_proba(X_test)[:, 1]
+                plot_roc_curve(y_test, y_prob, model_name=model_name)
+        except Exception as e:
+            print(f"Bỏ qua {model_file}: {e}")
 
-    # Vẽ ROC curve nếu model hỗ trợ predict_proba
-    if hasattr(model, "predict_proba"):
-        from src.evaluation.plot_results import plot_roc_curve
-        y_prob = model.predict_proba(X_test)[:, 1]
-        plot_roc_curve(y_test, y_prob, model_name=model_name)
+    # Vẽ biểu đồ so sánh tổng hợp nếu có model_comparison.csv
+    comparison_path = METRICS_DIR / "model_comparison.csv"
+    if comparison_path.exists():
+        results_df = pd.read_csv(comparison_path)
+        plot_model_comparison(results_df)
 
     print("=== ĐÁNH GIÁ XONG ===")
 

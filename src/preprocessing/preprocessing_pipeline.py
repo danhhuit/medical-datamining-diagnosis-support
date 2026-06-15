@@ -20,12 +20,13 @@ from src.preprocessing.config import (
 
 def run_preprocessing_pipeline() -> None:
     """
-    Pipeline tiền xử lý hoàn chỉnh cho heart.csv.
+    Pipeline tiền xử lý hoàn chỉnh cho 3 bộ dữ liệu heart.
+    Đọc, gộp, loại trùng, làm sạch, chuẩn hóa.
     """
     print("=== BẮT ĐẦU TIỀN XỬ LÝ DỮ LIỆU ===")
     ensure_directories()
 
-    print(f"[1] Đọc dữ liệu gốc từ: {RAW_DATA_FILE}")
+    print(f"[1] Đọc bộ dữ liệu gốc từ: {RAW_DATA_FILE}...")
     df = load_raw_data(RAW_DATA_FILE)
 
     print("[2] Kiểm tra dữ liệu ban đầu...")
@@ -57,6 +58,7 @@ def run_preprocessing_pipeline() -> None:
     df_association.to_csv(ASSOCIATION_DATA_FILE, index=False)
 
     print("=== TIỀN XỬ LÝ XONG ===")
+    print(f"Tổng số dòng sau gộp & xử lý: {len(df_processed)}")
     print(f"Dữ liệu processed (Phân lớp & Hồi quy): {PROCESSED_DATA_FILE}")
     print(f"Dữ liệu association (Luật kết hợp): {ASSOCIATION_DATA_FILE}")
     print(f"Preprocessor artifact: {preprocessor_path}")

@@ -16,6 +16,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+# Fix encoding cho Windows console (hỗ trợ tiếng Việt)
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr.reconfigure(encoding='utf-8')
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -35,13 +41,16 @@ plt.rcParams["axes.titlesize"] = 13
 plt.rcParams["axes.labelsize"] = 11
 
 # ── Đường dẫn ──
-DATA_PATH = PROJECT_ROOT / "data" / "raw" / "heart.csv"
+from src.preprocessing.config import RAW_DATA_FILE
+from src.preprocessing.clean_data import load_raw_data
+
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "figures" / "eda"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-print(f"Đọc dữ liệu từ: {DATA_PATH}")
-df = pd.read_csv(DATA_PATH)
-print(f"Kích thước: {df.shape}")
+print(f"Đọc dữ liệu gốc từ {RAW_DATA_FILE}...")
+df = load_raw_data(RAW_DATA_FILE)
+df = df.drop_duplicates().reset_index(drop=True)
+print(f"Kích thước sau khi loại trùng: {df.shape}")
 
 numeric_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
 categorical_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]

@@ -116,6 +116,7 @@ LANG = {
         "thal_0": "0 – Bình thường",
         "thal_1": "1 – Khuyết tật cố định (fixed defect)",
         "thal_2": "2 – Khuyết tật hồi phục (reversible defect)",
+        "thal_3": "3 – Không xác định (unknown)",
 
         # Rules page
         "rules_title": "Luật kết hợp đã khai phá",
@@ -184,7 +185,7 @@ LANG = {
             "- Áp dụng và so sánh 5 thuật toán Machine Learning.\n"
             "- Khai phá luật kết hợp bằng Apriori và FP-Growth.\n"
             "- Xây dựng ứng dụng demo trực quan bằng Streamlit.\n\n---\n"
-            "**Dữ liệu:** Heart Disease UCI Dataset (Kaggle) – 297 mẫu, 13 thuộc tính + 1 nhãn.\n\n---\n"
+            "**Dữ liệu:** Bộ dữ liệu bệnh tim đã gộp (Heart Disease Merged Dataset) – 1625 mẫu thô (599 mẫu unique sau loại trùng), 13 thuộc tính + 1 nhãn.\n\n---\n"
             "**Thành viên nhóm:**\n\n"
             "| Thành viên | Vai trò |\n|-----------|--------|\n"
             "| Thành Danh | Mô hình chẩn đoán, tích hợp pipeline |\n"
@@ -311,6 +312,7 @@ LANG = {
         "thal_0": "0 – Normal",
         "thal_1": "1 – Fixed defect",
         "thal_2": "2 – Reversible defect",
+        "thal_3": "3 – Unknown (unknown)",
 
         "rules_title": "Mined Association Rules",
         "rules_explain_title": "What are Association Rules?",
@@ -374,7 +376,7 @@ LANG = {
             "- Apply and compare 5 Machine Learning algorithms.\n"
             "- Mine association rules using Apriori and FP-Growth.\n"
             "- Build a visual demo application with Streamlit.\n\n---\n"
-            "**Data:** Heart Disease UCI Dataset (Kaggle) – 297 samples, 13 attributes + 1 label.\n\n---\n"
+            "**Data:** Heart Disease Merged Dataset – 1625 raw samples (599 unique samples after deduplication), 13 attributes + 1 label.\n\n---\n"
             "**Team Members:**\n\n"
             "| Member | Role |\n|--------|------|\n"
             "| Thanh Danh | Diagnosis models, pipeline integration |\n"

@@ -13,12 +13,10 @@ from src.utils.config import (
 def run_statistical_tests() -> None:
     print("=== BẮT ĐẦU KIỂM ĐỊNH THỐNG KÊ (ANOVA & CHI-SQUARE) ===")
     
-    # 1. Đọc dữ liệu gốc
-    raw_data_file = RAW_DATA_DIR / "heart.csv"
-    if not raw_data_file.exists():
-        raise FileNotFoundError(f"Không tìm thấy dữ liệu gốc tại: {raw_data_file}")
-        
-    df = pd.read_csv(raw_data_file)
+    # 1. Đọc bộ dữ liệu gốc
+    from src.preprocessing.config import RAW_DATA_FILE
+    from src.preprocessing.clean_data import load_raw_data
+    df = load_raw_data(RAW_DATA_FILE)
     df = df.drop_duplicates().reset_index(drop=True)
     
     target_col = "condition"

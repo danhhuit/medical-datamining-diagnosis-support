@@ -8,6 +8,31 @@ def load_raw_data(file_path) -> pd.DataFrame:
     df = pd.read_csv(file_path)
     return df
 
+
+def load_and_merge_raw_data(file_paths) -> pd.DataFrame:
+    """
+    Đọc và gộp nhiều file CSV, loại bỏ dòng trùng lặp giữa các file.
+    Sử dụng cho trường hợp có nhiều bộ dữ liệu cùng schema.
+    """
+    dfs = []
+    for fp in file_paths:
+        if fp.exists():
+            df = pd.read_csv(fp)
+            print(f"  -> Đọc {fp.name}: {df.shape[0]} dòng x {df.shape[1]} cột")
+            dfs.append(df)
+        else:
+            print(f"  -> Cảnh báo: Không tìm thấy {fp}")
+
+    if not dfs:
+        raise FileNotFoundError("Không tìm thấy file dữ liệu nào!")
+
+    merged = pd.concat(dfs, ignore_index=True)
+    before = len(merged)
+    merged = merged.drop_duplicates().reset_index(drop=True)
+    after = len(merged)
+    print(f"  -> Gộp: {before} dòng -> loại trùng -> {after} dòng unique")
+    return merged
+
 def basic_data_check(df: pd.DataFrame) -> dict:
     """
     Kiểm tra tổng quan dữ liệu:
