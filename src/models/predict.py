@@ -83,6 +83,16 @@ def predict_one(input_data: Dict[str, Any], model_file_name: str) -> Dict[str, A
 
     input_df = build_input_dataframe(input_data, feature_names)
 
+    # Nạp scaler từ preprocessor artifact để chuẩn hóa các cột liên tục
+    from src.utils.config import BASE_DIR
+    preprocessor_path = BASE_DIR / "outputs" / "preprocessors" / "heart_preprocessor.pkl"
+    if preprocessor_path.exists():
+        preprocessor_artifact = joblib.load(preprocessor_path)
+        scaler = preprocessor_artifact.get("scaler")
+        continuous_cols = preprocessor_artifact.get("continuous_columns", ["age", "trestbps", "chol", "thalach", "oldpeak"])
+        if scaler:
+            input_df[continuous_cols] = scaler.transform(input_df[continuous_cols])
+
     prediction = model.predict(input_df)[0]
 
     result = {

@@ -7,6 +7,7 @@ PREPROCESSOR_DIR = BASE_DIR / "outputs" / "preprocessors"
 
 RAW_DATA_FILE = RAW_DATA_DIR / "heart.csv"
 PROCESSED_DATA_FILE = PROCESSED_DATA_DIR / "heart_processed.csv"
+ASSOCIATION_DATA_FILE = PROCESSED_DATA_DIR / "heart_association.csv"
 
 TARGET_COLUMN_RAW = "condition"
 TARGET_COLUMN_PROCESSED = "diagnosis"

@@ -24,3 +24,6 @@ openpyxl
 
 # Jupyter Notebooks
 jupyter
+
+# Gemini API Integration
+google-generativeai

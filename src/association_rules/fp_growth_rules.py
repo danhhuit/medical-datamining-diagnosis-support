@@ -8,13 +8,15 @@ import pandas as pd
 from mlxtend.frequent_patterns import fpgrowth, association_rules
 
 from src.association_rules.export_rules import export_rules_to_csv
-from src.preprocessing.config import PROCESSED_DATA_FILE
+from src.preprocessing.config import ASSOCIATION_DATA_FILE
 
 
 def binarize_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Chuyển dữ liệu đã xử lý sang dạng boolean cho FP-Growth.
     """
+    # Vì toàn bộ cột trong ASSOCIATION_DATA_FILE đều là chuỗi, 
+    # pd.get_dummies sẽ mã hóa one-hot đầy đủ và chính xác tất cả các thuộc tính.
     df_encoded = pd.get_dummies(df)
     df_boolean = df_encoded.astype(bool)
     return df_boolean
@@ -49,7 +51,7 @@ def run_fpgrowth(data_path, min_support: float = 0.15, min_confidence: float = 0
 
 
 if __name__ == "__main__":
-    data_path = str(PROCESSED_DATA_FILE)
+    data_path = str(ASSOCIATION_DATA_FILE)
 
     rules = run_fpgrowth(data_path, min_support=0.15, min_confidence=0.7)
 
