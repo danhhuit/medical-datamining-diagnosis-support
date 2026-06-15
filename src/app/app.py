@@ -1164,7 +1164,6 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Gemini AI Config**" if lang == "vi" else "**Gemini AI Config**")
     
-    import os
     default_key = os.environ.get("GEMINI_API_KEY", "")
     
     gemini_key = st.sidebar.text_input(
