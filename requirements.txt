@@ -1,29 +1,26 @@
 # Core Data Science
-pandas
-numpy
+pandas==3.0.3
+numpy==2.4.6
 
 # Machine Learning
-scikit-learn
+scikit-learn==1.9.0
 
 # Visualization
-matplotlib
-seaborn
-plotly
+matplotlib==3.11.0
+seaborn==0.13.2
+plotly==6.8.0
 
 # Association Rules Mining
-mlxtend
+mlxtend==0.25.0
 
 # Web App Demo
-streamlit
+streamlit==1.58.0
 
 # Model Persistence
-joblib
+joblib==1.5.3
 
 # Excel Support
-openpyxl
-
-# Jupyter Notebooks
-jupyter
+openpyxl==3.1.5
 
 # Gemini API Integration
-google-generativeai
+google-generativeai==0.8.6
