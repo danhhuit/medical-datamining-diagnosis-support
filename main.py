@@ -83,9 +83,9 @@ def run_association_rules():
     from src.association_rules.apriori_rules import run_apriori
     from src.association_rules.fp_growth_rules import run_fpgrowth
     from src.association_rules.export_rules import export_rules_to_csv
-    from src.preprocessing.config import PROCESSED_DATA_FILE
+    from src.preprocessing.config import ASSOCIATION_DATA_FILE
 
-    data_path = str(PROCESSED_DATA_FILE)
+    data_path = str(ASSOCIATION_DATA_FILE)
 
     print("=== KHAI PHÁ LUẬT KẾT HỢP ===")
 
@@ -114,24 +114,44 @@ def run_app():
     ])
 
 
+def run_clustering():
+    """Chạy gom cụm K-Means bệnh nhân."""
+    from src.models.clustering import run_clustering_pipeline
+    run_clustering_pipeline(n_clusters=3)
+
+
+def run_analytics():
+    """Chạy kiểm định thống kê ANOVA/Chi2 và huấn luyện hồi quy."""
+    from src.utils.statistical_tests import run_statistical_tests
+    from src.models.regression import run_regression_pipeline
+    run_statistical_tests()
+    run_regression_pipeline()
+
+
 def run_full_pipeline():
-    """Chạy toàn bộ pipeline từ tiền xử lý đến khai phá luật."""
+    """Chạy toàn bộ pipeline tích hợp đầy đủ."""
     print("=" * 60)
     print(" MEDICAL DATAMINING DIAGNOSIS SUPPORT")
-    print(" Chạy toàn bộ pipeline")
+    print(" Chạy toàn bộ pipeline tích hợp nâng cấp")
     print("=" * 60)
 
     print("\n\n>>> BƯỚC 1: TIỀN XỬ LÝ DỮ LIỆU")
     run_preprocessing()
 
-    print("\n\n>>> BƯỚC 2: HUẤN LUYỆN MÔ HÌNH")
+    print("\n\n>>> BƯỚC 2: HUẤN LUYỆN MÔ HÌNH PHÂN LỚP")
     run_training()
 
-    print("\n\n>>> BƯỚC 3: ĐÁNH GIÁ MÔ HÌNH")
+    print("\n\n>>> BƯỚC 3: ĐÁNH GIÁ MÔ HÌNH PHÂN LỚP")
     run_evaluation()
 
     print("\n\n>>> BƯỚC 4: KHAI PHÁ LUẬT KẾT HỢP")
     run_association_rules()
+
+    print("\n\n>>> BƯỚC 5: PHÂN CỤM BỆNH NHÂN (CLUSTERING)")
+    run_clustering()
+
+    print("\n\n>>> BƯỚC 6: PHÂN TÍCH THỐNG KÊ & HỒI QUY (ANALYTICS)")
+    run_analytics()
 
     print("\n" + "=" * 60)
     print(" PIPELINE HOÀN TẤT!")
@@ -145,15 +165,17 @@ def main():
         description="Medical Datamining Diagnosis Support - Pipeline Manager"
     )
     parser.add_argument("--preprocess", action="store_true", help="Chỉ chạy tiền xử lý")
-    parser.add_argument("--train", action="store_true", help="Chỉ chạy huấn luyện")
-    parser.add_argument("--evaluate", action="store_true", help="Chỉ chạy đánh giá")
+    parser.add_argument("--train", action="store_true", help="Chỉ chạy huấn luyện phân lớp")
+    parser.add_argument("--evaluate", action="store_true", help="Chỉ chạy đánh giá phân lớp")
     parser.add_argument("--rules", action="store_true", help="Chỉ chạy khai phá luật")
+    parser.add_argument("--cluster", action="store_true", help="Chỉ chạy phân cụm")
+    parser.add_argument("--analytics", action="store_true", help="Chỉ chạy phân tích thống kê & hồi quy")
     parser.add_argument("--app", action="store_true", help="Chạy ứng dụng demo")
 
     args = parser.parse_args()
 
     # Nếu không có tham số nào -> chạy toàn bộ pipeline
-    if not any([args.preprocess, args.train, args.evaluate, args.rules, args.app]):
+    if not any([args.preprocess, args.train, args.evaluate, args.rules, args.cluster, args.analytics, args.app]):
         run_full_pipeline()
         return
 
@@ -165,6 +187,10 @@ def main():
         run_evaluation()
     if args.rules:
         run_association_rules()
+    if args.cluster:
+        run_clustering()
+    if args.analytics:
+        run_analytics()
     if args.app:
         run_app()
 

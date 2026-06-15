@@ -16,6 +16,7 @@ FIGURES_DIR = OUTPUT_DIR / "figures"
 
 # File dữ liệu đầu vào cho mô hình
 PROCESSED_DATA_FILE = PROCESSED_DATA_DIR / "heart_processed.csv"
+ASSOCIATION_DATA_FILE = PROCESSED_DATA_DIR / "heart_association.csv"
 
 # Cột target
 TARGET_COLUMN = "diagnosis"

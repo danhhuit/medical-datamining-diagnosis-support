@@ -1,0 +1,92 @@
+{
+    "anova": {
+        "age": {
+            "f_statistic": 16.038096518272642,
+            "p_value": 7.862867945608045e-05,
+            "is_significant": true,
+            "interpretation": "Khác biệt có ý nghĩa thống kê"
+        },
+        "trestbps": {
+            "f_statistic": 7.117646427326161,
+            "p_value": 0.008054796358875,
+            "is_significant": true,
+            "interpretation": "Khác biệt có ý nghĩa thống kê"
+        },
+        "chol": {
+            "f_statistic": 1.9137998329046146,
+            "p_value": 0.1675877671474233,
+            "is_significant": false,
+            "interpretation": "Khác biệt không có ý nghĩa thống kê"
+        },
+        "thalach": {
+            "f_statistic": 64.58985473897073,
+            "p_value": 2.23971532339372e-14,
+            "is_significant": true,
+            "interpretation": "Khác biệt có ý nghĩa thống kê"
+        },
+        "oldpeak": {
+            "f_statistic": 64.67720842063603,
+            "p_value": 2.1597372771142796e-14,
+            "is_significant": true,
+            "interpretation": "Khác biệt có ý nghĩa thống kê"
+        }
+    },
+    "chi_square": {
+        "sex": {
+            "chi2_statistic": 21.851612168613475,
+            "p_value": 2.945690038078843e-06,
+            "dof": 1,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "cp": {
+            "chi2_statistic": 77.27579978222383,
+            "p_value": 1.1782838465918115e-16,
+            "dof": 3,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "fbs": {
+            "chi2_statistic": 0.0,
+            "p_value": 1.0,
+            "dof": 1,
+            "is_significant": false,
+            "interpretation": "Độc lập thống kê với bệnh tim"
+        },
+        "restecg": {
+            "chi2_statistic": 9.575507229251564,
+            "p_value": 0.008331151353680854,
+            "dof": 2,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "exang": {
+            "chi2_statistic": 50.9425597633616,
+            "p_value": 9.510884265909016e-13,
+            "dof": 1,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "slope": {
+            "chi2_statistic": 43.47317755212573,
+            "p_value": 3.630107106911135e-10,
+            "dof": 2,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "ca": {
+            "chi2_statistic": 72.30053062466945,
+            "p_value": 1.37257765344901e-15,
+            "dof": 3,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        },
+        "thal": {
+            "chi2_statistic": 82.46014428007756,
+            "p_value": 1.2416728386228762e-18,
+            "dof": 2,
+            "is_significant": true,
+            "interpretation": "Có liên quan có ý nghĩa thống kê với bệnh tim"
+        }
+    }
+}
